@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="sr-Latn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Tekstualna igra: kao birač u Srbiji prolaziš kroz izbore, od provere biračkog spiska do prijave nepravilnosti.">
+<meta name="version" content="1.0.0">
+<title>Birač</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%237A1F3D'/%3E%3Crect x='7.5' y='5' width='17' height='22' rx='1.6' fill='%23FFFFFF'/%3E%3Cpath d='M11 22.5h10' stroke='%237A1F3D' stroke-width='1.6' stroke-linecap='round' opacity='.35'/%3E%3Cpath d='M10.8 13.6l3.6 3.6 7.2-7.6' fill='none' stroke='%237A1F3D' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: podsetnik birača; gore dan ili sat, mesto i tri merača, ispod situacija i opcije kao redovi glasačkog listića */
+:root {
+  --bg: #F0EBEC;
+  --sheet: #FDFBFB;
+  --ink: #241A1D;
+  --muted: #6A5A5F;
+  --rule: #DCCDD1;
+  --stamp: #7A1F3D;
+  --stamp-soft: #F5E4EA;
+  --ok: #2D6A3A;
+  --part: #9A6300;
+  --bad: #B0261E;
+  --font-display: "Bitter", Georgia, serif;
+  --font-body: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161012; --sheet: #211A1C; --ink: #EFE6E8; --muted: #AE9EA3; --rule: #3D3034;
+    --stamp: #F0A0B8; --stamp-soft: #3A2129; --ok: #6FC283; --part: #E0A43C; --bad: #F07A70;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161012; --sheet: #211A1C; --ink: #EFE6E8; --muted: #AE9EA3; --rule: #3D3034;
+  --stamp: #F0A0B8; --stamp-soft: #3A2129; --ok: #6FC283; --part: #E0A43C; --bad: #F07A70;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 17px; line-height: 1.55;
+  padding-inline: 16px; padding-block: 24px 48px;
+}
+.wrap { max-width: 720px; margin: 0 auto; display: grid; gap: 16px; }
+
+.head {
+  display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; align-items: end;
+  border-bottom: 2px solid var(--ink); padding-bottom: 12px;
+}
+.eyebrow {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+}
+.place { font-family: var(--font-display); font-weight: 700; font-size: 20px; line-height: 1.25; text-wrap: balance; min-width: 0; }
+.clock {
+  font-family: var(--font-mono); font-weight: 500; font-size: 34px; line-height: 1;
+  font-variant-numeric: tabular-nums; color: var(--stamp); grid-row: 1 / span 2; grid-column: 2; align-self: center;
+}
+
+.meters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.meter { display: grid; gap: 4px; min-width: 0; }
+.meter-top { display: flex; justify-content: space-between; gap: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .04em; color: var(--muted); }
+.meter-top b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+.bar { height: 6px; background: var(--rule); border-radius: 3px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--stamp); transition: width .5s ease, background-color .3s; }
+.bar i.low { background: var(--bad); }
+
+.sheet {
+  background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px;
+  padding: 24px clamp(16px, 4vw, 32px); display: grid; gap: 16px; position: relative;
+}
+.step { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; }
+h1, h2 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.2; }
+h1 { font-size: clamp(28px, 6vw, 40px); font-weight: 800; }
+h2 { font-size: 26px; font-weight: 700; }
+p { margin: 0; max-width: 65ch; }
+.lead { font-size: 18px; }
+
+.ballot { list-style: none; margin: 0; padding: 0; display: grid; border-top: 1px solid var(--rule); }
+.ballot li { border-bottom: 1px solid var(--rule); }
+.opt {
+  width: 100%; display: grid; grid-template-columns: 44px 1fr; gap: 12px; align-items: start;
+  padding: 14px 4px; background: none; border: 0; text-align: left; color: var(--ink);
+  font: inherit; cursor: pointer; border-radius: 2px;
+}
+.opt:hover:not(:disabled) { background: var(--stamp-soft); }
+.opt:focus-visible { outline: 2px solid var(--stamp); outline-offset: 2px; }
+.opt:disabled { cursor: default; }
+.num { position: relative; font-family: var(--font-display); font-weight: 700; font-size: 20px; text-align: center; line-height: 1.4; }
+.num svg { position: absolute; inset: -9px -6px; width: calc(100% + 12px); height: calc(100% + 18px); overflow: visible; }
+.num ellipse { fill: none; stroke: var(--stamp); stroke-width: 2.4; stroke-linecap: round; stroke-dasharray: 140; stroke-dashoffset: 140; animation: draw .45s ease-out forwards; }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+.opt-text { min-width: 0; }
+.answered .opt:not(.chosen):not(.right) { color: var(--muted); }
+.tag { display: block; margin-top: 4px; font-family: var(--font-mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+.tag.ok { color: var(--ok); } .tag.part { color: var(--part); } .tag.bad { color: var(--bad); }
+
+.verdict { display: grid; gap: 12px; padding-top: 4px; }
+.stamp {
+  justify-self: start; font-family: var(--font-display); font-weight: 800; font-size: 20px; letter-spacing: .12em; text-transform: uppercase;
+  border: 3px solid currentColor; border-radius: 4px; padding: 2px 12px; transform: rotate(-4deg);
+  animation: thump .25s ease-out;
+}
+.stamp.ok { color: var(--ok); } .stamp.part { color: var(--part); } .stamp.bad { color: var(--bad); }
+@keyframes thump { from { transform: rotate(-4deg) scale(1.4); opacity: 0; } }
+.note { border-left: 3px solid var(--rule); padding-left: 12px; display: grid; gap: 8px; }
+.label { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+.actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.btn {
+  font-family: var(--font-display); font-weight: 700; font-size: 17px;
+  background: var(--stamp); color: var(--sheet); border: 0; border-radius: 3px; padding: 12px 20px; cursor: pointer;
+}
+.btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+.duties { margin: 0; padding-left: 20px; display: grid; gap: 4px; max-width: 65ch; }
+
+.log-wrap { overflow-x: auto; }
+table.log { width: 100%; border-collapse: collapse; font-size: 15px; }
+.log th, .log td { text-align: left; padding: 8px 8px 8px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.log th { font-family: var(--font-mono); font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.log td:first-child { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.score { font-family: var(--font-display); font-weight: 800; font-size: 56px; line-height: 1; color: var(--stamp); font-variant-numeric: tabular-nums; }
+.score small { font-size: 22px; color: var(--muted); }
+
+.foot { font-size: 14px; color: var(--muted); max-width: 65ch; }
+
+@media (max-width: 480px) {
+  .meters { grid-template-columns: 1fr; gap: 8px; }
+  .clock { font-size: 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .num ellipse { animation: none; stroke-dashoffset: 0; }
+  .stamp { animation: none; }
+  .bar i { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="head">
+    <div class="eyebrow">Birač · opština Jasenovo Polje · BM 34</div>
+    <div class="place" id="place">Kod kuće</div>
+    <div class="clock" id="clock">06:00</div>
+  </header>
+
+  <section class="meters" aria-label="Tvoj glas">
+    <div class="meter"><div class="meter-top"><span>Slobodan izbor</span><b id="m0v">60</b></div><div class="bar"><i id="m0"></i></div></div>
+    <div class="meter"><div class="meter-top"><span>Tajnost glasa</span><b id="m1v">60</b></div><div class="bar"><i id="m1"></i></div></div>
+    <div class="meter"><div class="meter-top"><span>Informisanost</span><b id="m2v">60</b></div><div class="bar"><i id="m2"></i></div></div>
+  </section>
+
+  <main class="sheet" id="sheet" aria-live="polite"></main>
+
+  <p class="foot">Edukativna simulacija sa izmišljenim mestima i situacijama. Pravila su pojednostavljena prema Zakonu o izboru narodnih poslanika, Zakonu o jedinstvenom biračkom spisku i uputstvima Republičke izborne komisije. Nisu pravni savet. Za rokove i postupke proveri zvanične informacije za konkretne izbore.</p>
+</div>
+
+<script>
+const DEF = { ok: [5, 5, 6], part: [-2, -2, -2], bad: [-8, -8, -6] };
+const VLABEL = { ok: "Ispravno", part: "Delimično", bad: "Pogrešno" };
+
+const S = [
+{ t: "D−20", loc: "Kod kuće", title: "Jesam li na spisku?",
+  text: "Do izbora je ostalo dvadeset dana. Pre dve godine si se preselio u drugi deo grada i nisi siguran da li si upisan u birački spisak i gde glasaš.",
+  opts: [
+    { x: "Sačekaš obaveštenje o glasanju, tamo će sve pisati.", v: "part", fx: [0, 0, -6], f: "Obaveštenje može da ne stigne. Ako postoji greška, tada je često kasno za ispravku." },
+    { x: "Proveriš upis preko zvaničnog servisa za proveru biračkog spiska ili u opštinskoj upravi.", v: "ok" },
+    { x: "Zamoliš poznanika iz lokalnog odbora jedne stranke da ti proveri.", v: "bad", fx: [-6, -4, -4], f: "Ovo možeš sam, besplatno i bez ikakvih obaveza prema bilo kome." },
+    { x: "Ne proveravaš, svi punoletni su automatski upisani.", v: "bad", fx: [0, 0, -10], f: "Upis jeste automatski, ali podaci o adresi i biračkom mestu mogu biti pogrešni." } ],
+  why: "Birački spisak se zaključuje pre dana izbora i posle toga se teško menja. Ako proveriš na vreme, ostaje dovoljno vremena da opštinska uprava ispravi grešku." },
+
+{ t: "D−12", loc: "Na poslu", title: "„Sigurni glasovi“",
+  text: "Šef u javnom preduzeću traži da mu do petka doneseš spisak od deset „sigurnih glasova“ iz porodice i komšiluka, sa imenima i brojevima telefona. „Znaš kako to ide, svi to rade.“",
+  opts: [
+    { x: "Doneseš spisak, ne želiš problem na poslu.", v: "bad", fx: [-16, -8, 0], f: "Time učestvuješ u kontrolisanom glasanju, a ljudi sa spiska dolaze pod isti pritisak." },
+    { x: "Odbiješ. Sačuvaš poruke ili beleške o tom zahtevu i razmisliš o prijavi tužilaštvu ili organizaciji koja prati izbore.", v: "ok" },
+    { x: "Doneseš spisak sa izmišljenim imenima.", v: "part", fx: [-4, 0, 0], f: "Izbegao si da nekog izložiš pritisku, ali sistem ucene i dalje radi i pogađa druge zaposlene." },
+    { x: "Objaviš šefovo ime na društvenim mrežama.", v: "bad", fx: [-4, 0, -6], f: "Bez dokaza i prijave nadležnima to samo tebe izlaže riziku, a ništa ne menja." } ],
+  why: "Pritisak na birače pretnjom ili ucenom je krivično delo, a ucenjivanje zaposlenih je jedan od najčešćih oblika. Sačuvani dokazi (poruke, mejlovi, beleške sa datumom) ključni su za prijavu tužilaštvu." },
+
+{ t: "D−5", loc: "Ispred zgrade", title: "Paket namirnica",
+  text: "Aktivista jedne stranke deli kesu sa uljem, šećerom i brašnom: „Ovo je za vas. Pa, znate već za koga u nedelju.“",
+  opts: [
+    { x: "Uzmeš kesu, a glasaš kako hoćeš.", v: "bad", fx: [-10, 0, -4], f: "Primanje poklona u zamenu za glas je kažnjivo i za onoga ko prima, ne samo za onoga ko daje." },
+    { x: "Ljubazno odbiješ. Ako se ponudi uslovljava glasanjem, zapamtiš vreme i mesto i prijaviš policiji.", v: "ok" },
+    { x: "Uzmeš kesu i obećaš glas, da ne bude neprijatno.", v: "bad", fx: [-14, -4, 0] },
+    { x: "Odbiješ i počneš da se svađaš sa aktivistom.", v: "part", fx: [0, 0, -2], f: "Odbio si, ali svađa ništa ne rešava. Prijava rešava." } ],
+  why: "Davanje i primanje poklona ili novca u zamenu za glas je krivično delo, i za onog ko daje i za onog ko prima." },
+
+{ t: "D−1", loc: "Kod kuće", title: "Obaveštenje nije stiglo",
+  text: "Sutra su izbori, a obaveštenje o glasanju nije stiglo u sanduče.",
+  opts: [
+    { x: "Ne možeš da glasaš bez obaveštenja.", v: "bad", fx: [0, 0, -12], f: "Obaveštenje nije uslov za glasanje." },
+    { x: "Proveriš na zvaničnom servisu gde glasaš i sutra odeš sa ličnom kartom.", v: "ok" },
+    { x: "Sutra odeš na najbliže biračko mesto, tamo će te upisati.", v: "bad", fx: [0, 0, -8], f: "Glasaš samo na biračkom mestu na kom si upisan. Odbor nikoga ne dopisuje." },
+    { x: "Pozoveš lokalnu stranku da ti donese obaveštenje.", v: "bad", fx: [-6, 0, -4] } ],
+  why: "Obaveštenje o glasanju je samo informacija. Za glasanje je dovoljno da si upisan u izvod za to biračko mesto i da imaš lični dokument sa fotografijom." },
+
+{ t: "D−1", loc: "Kod kuće", title: "Otac ne ustaje iz kreveta",
+  text: "Tvoj otac je posle operacije vezan za krevet, a želi da glasa.",
+  opts: [
+    { x: "Uzmeš njegovu ličnu kartu i glasaš i za njega.", v: "bad", fx: [-6, -6, -6], f: "Glasa se isključivo lično." },
+    { x: "Sutra, najkasnije do 11 časova, javiš njegovom biračkom odboru da želi da glasa van biračkog mesta. Članovi odbora dolaze kod njega.", v: "ok" },
+    { x: "Doneseš mu listić kući da ga popuni.", v: "bad", fx: [-4, -8, -4], f: "Listić ne sme da izađe sa biračkog mesta." },
+    { x: "Zaključite da ovaj put ne može da glasa.", v: "part", fx: [0, 0, -6], f: "Može. Samo treba na vreme da se javi odboru." } ],
+  why: "Birač koji zbog bolesti, starosti ili invaliditeta ne može da dođe na biračko mesto obaveštava birački odbor najkasnije do 11 časova na dan izbora. Članovi odbora tada dolaze kod njega sa izbornim materijalom." },
+
+{ t: "07:40", loc: "Kod kuće", title: "Gde je lična karta?",
+  text: "Spremaš se da kreneš, a novčanik sa ličnom kartom ostao je kod brata. Imaš pasoš, vozačku dozvolu i fotografiju lične karte na telefonu.",
+  opts: [
+    { x: "Poneseš fotografiju lične karte na telefonu.", v: "bad", fx: [0, 0, -8], f: "Fotografija dokumenta nije dokument." },
+    { x: "Poneseš pasoš ili vozačku dozvolu.", v: "ok" },
+    { x: "Odeš bez dokumenta, ionako te znaju u kraju.", v: "bad", fx: [0, 0, -8], f: "Odbor ne sme da te pusti da glasaš na osnovu poznanstva." },
+    { x: "Odustaneš od glasanja.", v: "bad", fx: [0, 0, -6] } ],
+  why: "Birač dokazuje identitet važećom javnom ispravom sa fotografijom, kao što su lična karta, pasoš ili vozačka dozvola." },
+
+{ t: "07:55", loc: "Parking ispred BM 34", title: "Ponuda na parkingu",
+  text: "Na parkingu ti prilazi čovek: „Dve hiljade dinara. Uneseš ovaj već popunjen listić i ubaciš ga u kutiju, a meni doneseš onaj prazan koji dobiješ.“",
+  opts: [
+    { x: "Pristaneš, dve hiljade su dve hiljade.", v: "bad", fx: [-18, -10, 0] },
+    { x: "Odbiješ, zapamtiš kako izgleda i gde stoji, pa kažeš posmatraču ili predsedniku odbora i pozoveš policiju na 192.", v: "ok" },
+    { x: "Uzmeš popunjen listić, ali ga ne ubaciš.", v: "bad", fx: [-8, -4, 0], f: "Time i dalje učestvuješ u lancu, a listić nosiš na biračko mesto." },
+    { x: "Odbiješ i ništa nikom ne kažeš.", v: "part", fx: [0, 0, -4], f: "Ti nisi učestvovao, ali će sledeći birač dobiti istu ponudu." } ],
+  why: "Ovo je „bugarski voz“: popunjen listić ulazi na biračko mesto, a prazan izlazi kao dokaz i ide sledećem biraču. Kupovina glasova je krivično delo." },
+
+{ t: "08:00", loc: "Ulaz u BM 34", title: "Čovek sa spiskom",
+  text: "Na ulazu u školu čovek sa fasciklom te pita: „Kako se zovete? Da štikliram da ste došli.“ Nije član odbora i nema akreditaciju.",
+  opts: [
+    { x: "Kažeš mu ime, ne želiš da praviš problem.", v: "bad", fx: [-10, -4, 0], f: "Tvoje ime mu služi da proveri ko je od „sigurnih glasova“ izašao." },
+    { x: "Ne kažeš ništa, uđeš i obavestiš predsednika odbora ili posmatrača da neko vodi spisak birača.", v: "ok" },
+    { x: "Izmisliš ime.", v: "part", fx: [0, 0, 0], f: "Nisi otkrio podatke, ali je ćutanje uz prijavu odboru jednostavnije i efikasnije." },
+    { x: "Uzmeš mu fasciklu.", v: "bad", fx: [-4, 0, -6], f: "Ne preuzimaš ulogu policije. Odbor i policija imaju ovlašćenja." } ],
+  why: "Niko osim biračkog odbora nema pravo da beleži ko je glasao. Neovlašćeno vođenje evidencije birača je oblik pritiska." },
+
+{ t: "08:05", loc: "BM 34 · OŠ „Sveti Sava“", title: "Tuđi potpis",
+  text: "Član odbora ti pokazuje gde da se potpišeš u izvodu, a ti vidiš da pored tvog imena već stoji nečiji potpis.",
+  opts: [
+    { x: "Potpišeš se pored, valjda je greška.", v: "bad", fx: [0, 0, -10], f: "Moguće je da je neko već glasao pod tvojim imenom. To mora da se zabeleži." },
+    { x: "Ukažeš odboru na postojeći potpis i tražiš da se to upiše u zapisnik. Ako je prisutan posmatrač, kažeš i njemu.", v: "ok" },
+    { x: "Odeš kući, nema smisla.", v: "bad", fx: [0, 0, -10], f: "Ako odeš, niko neće znati da je neko možda glasao umesto tebe." },
+    { x: "Optužiš odbor za krađu pred svim biračima.", v: "part", fx: [0, 0, -2], f: "Treba ukazati, ali mirno. Odbor mora da utvrdi šta se desilo i da to zapiše." } ],
+  why: "Potpis pored tvog imena znači da je neko možda glasao umesto tebe. Odbor to upisuje u zapisnik i odlučuje o daljem postupku, a zapisnik je osnov za prigovor." },
+
+{ t: "08:07", loc: "BM 34 · OŠ „Sveti Sava“", title: "Sprej na prstu",
+  text: "Član odbora uzima sprej da ti obeleži prst. Ne voliš da ti nešto prska po ruci.",
+  opts: [
+    { x: "Pristaneš. Trag se vidi samo pod UV svetlom i nestaje za nekoliko dana.", v: "ok" },
+    { x: "Odbiješ i tražiš da glasaš bez spreja.", v: "bad", fx: [0, 0, -10], f: "Birač koji odbije obeležavanje prsta ne može da glasa." },
+    { x: "Odmah obrišeš prst maramicom.", v: "bad", fx: [0, 0, -6], f: "Sprej postoji da bi se sprečilo višestruko glasanje, tvoje ili tuđe." },
+    { x: "Tražiš da ti obeleže prst na drugoj ruci.", v: "part", fx: [0, 0, 0], f: "Prst se ne bira po želji, osim kad birač nema prst koji se obično obeležava." } ],
+  why: "Obeležavanje prsta sprečava da ista osoba glasa više puta. Birač koji odbije da mu se prst obeleži ne može da glasa." },
+
+{ t: "08:08", loc: "BM 34 · OŠ „Sveti Sava“", title: "Savet uz listić",
+  text: "Član odbora ti pruža listić i tiho dodaje: „Broj tri, je l' tako? Svi ovde tako glasaju.“",
+  opts: [
+    { x: "Zaokružiš broj tri, nema veze.", v: "bad", fx: [-16, 0, 0] },
+    { x: "Ne obaziraš se i glasaš po svom izboru. Posle kažeš predsedniku odbora ili posmatraču šta se desilo.", v: "ok" },
+    { x: "Ne kažeš ništa, glasaš svoje i odeš.", v: "part", fx: [4, 0, -4], f: "Ti si glasao slobodno, ali će drugi birači čuti isti „savet“." },
+    { x: "Vratiš listić i tražiš drugog člana odbora.", v: "part", fx: [0, 0, -2], f: "Nije potrebno. Listić je isti, a važno je da se ponašanje prijavi." } ],
+  why: "Članovi odbora ne smeju da utiču na birače. Uticanje se beleži u zapisnik, a predsednik odbora ga mora sprečiti." },
+
+{ t: "08:09", loc: "BM 34 · paravan", title: "Supruga hoće sa tobom",
+  text: "Supruga je dobila svoj listić i kreće za tobom iza paravana: „Ajde zajedno, brže je.“",
+  opts: [
+    { x: "Pustiš je, porodica ste.", v: "bad", fx: [-6, -12, 0], f: "Porodično glasanje je najčešća nepravilnost na biračkim mestima." },
+    { x: "Kažeš joj da iza paravana ide jedan po jedan i sačekaš red.", v: "ok" },
+    { x: "Ti popuniš oba listića da bude brže.", v: "bad", fx: [-14, -14, 0] },
+    { x: "Uđete zajedno, ali ne gledate jedno drugom listić.", v: "part", fx: [-2, -8, 0], f: "Tajnost glasanja ne zavisi od dobre volje. Iza paravana je jedan birač." } ],
+  why: "Iza paravana je samo jedan birač. Izuzetak je birač koji ne može sam da glasa (slep, osoba sa invaliditetom, nepismen), koji vodi pomagača po svom izboru." },
+
+{ t: "08:10", loc: "BM 34 · paravan", title: "Kako se glasa",
+  text: "Iza paravana si. Na listiću su liste sa rednim brojevima. Želiš da tvoj glas bude važeći.",
+  opts: [
+    { x: "Zaokružiš redni broj ispred liste za koju glasaš.", v: "ok" },
+    { x: "Zaokružiš dve liste koje ti se podjednako sviđaju.", v: "bad", fx: [0, 0, -10], f: "Listić sa više zaokruženih lista je nevažeći." },
+    { x: "Prekrižiš sve liste osim one za koju glasaš.", v: "part", fx: [0, 0, -4], f: "Rizično je. Odbor može da proceni da volja nije nesumnjiva, pa da listić proglasi nevažećim." },
+    { x: "Zaokružiš, pa se predomisliš i tražiš novi listić.", v: "bad", fx: [0, 0, -6], f: "Biraču se ne izdaje novi listić. Odluči pre nego što zaokružiš." } ],
+  why: "Važeći je listić iz kog se nesumnjivo vidi za koju listu je birač glasao. Najsigurnije je zaokružiti redni broj. Prazan listić i listić sa više zaokruženih lista su nevažeći, a novi listić se ne izdaje." },
+
+{ t: "08:11", loc: "BM 34 · paravan", title: "Fotografija listića",
+  text: "Popunio si listić. Prijatelj ti je u šali rekao da mu pošalješ sliku, „da vidi da si glasao kako treba“.",
+  opts: [
+    { x: "Fotografišeš listić, šala je šala.", v: "bad", fx: [-8, -14, 0], f: "Fotografija listića je upravo dokaz koji traže kupci glasova i oni koji ucenjuju." },
+    { x: "Ne vadiš telefon. Presaviješ listić tako da se ne vidi za koga si glasao.", v: "ok" },
+    { x: "Fotografišeš, ali sliku odmah obrišeš.", v: "bad", fx: [-4, -10, 0] },
+    { x: "Pokažeš popunjen listić članu odbora, da proveri da li je dobro.", v: "bad", fx: [0, -12, 0], f: "Niko ne treba da vidi tvoj popunjen listić." } ],
+  why: "Fotografisanje listića je zabranjeno jer ugrožava tajnost glasanja i omogućava kupovinu glasova i ucene." },
+
+{ t: "08:12", loc: "BM 34 · glasačka kutija", title: "„Daj, ja ću“",
+  text: "Prilaziš kutiji, a član odbora pruža ruku: „Dajte meni listić, ja ću da ga ubacim.“",
+  opts: [
+    { x: "Daš mu listić, ljubazan je.", v: "bad", fx: [-6, -8, -4], f: "Kad listić napusti tvoje ruke, ne znaš šta se sa njim dešava." },
+    { x: "Zahvališ i sam ubaciš presavijen listić u kutiju.", v: "ok" },
+    { x: "Staviš listić u džep i odeš.", v: "bad", fx: [-6, 0, -8], f: "Listić koji izađe sa biračkog mesta je osnova „bugarskog voza“." },
+    { x: "Daš mu listić, ali gledaš kako ga ubacuje.", v: "part", fx: [0, -4, -2], f: "Sigurnije je da ga ubaciš sam." } ],
+  why: "Birač lično ubacuje presavijen listić u glasačku kutiju. Listić ne sme da napusti biračko mesto." },
+
+{ t: "08:20", loc: "Izlaz iz škole", title: "Anketar na izlazu",
+  text: "Na izlazu te zaustavlja mlada žena sa tabletom: „Izlazna anketa. Za koga ste glasali?“",
+  opts: [
+    { x: "Moraš da odgovoriš, inače je prekršaj.", v: "bad", fx: [-6, -6, -6], f: "Niko ne može da te natera da kažeš za koga si glasao." },
+    { x: "Odgovoriš ili odbiješ, kako hoćeš. Odgovor je dobrovoljan i ne daješ ime ni dokument.", v: "ok" },
+    { x: "Pokažeš joj ličnu kartu da potvrdiš da si glasao.", v: "bad", fx: [-4, -6, -4], f: "Ozbiljne ankete ne traže lične podatke." },
+    { x: "Pozoveš policiju.", v: "bad", fx: [0, 0, -6], f: "Izlazne ankete nisu zabranjene. Zabranjeno je samo objavljivanje rezultata pre zatvaranja biračkih mesta." } ],
+  why: "Učešće u izlaznoj anketi je dobrovoljno i anonimno. Niko nema pravo da te primora da otkriješ svoj glas." },
+
+{ t: "10:00", loc: "Kod kuće", title: "Gde da prijaviš",
+  text: "Kod kuće razmišljaš o „savetu“ člana odbora i o čoveku sa spiskom na ulazu. Želiš da to negde ostane zabeleženo.",
+  opts: [
+    { x: "Objaviš na mrežama snimak sa biračkog mesta koji je napravio komšija.", v: "bad", fx: [0, -8, -4], f: "Snimci sa biračkog mesta mogu da otkriju druge birače, a sama objava nije prijava." },
+    { x: "Javiš organizaciji koja prati izbore, a ako hoćeš i formalni postupak, podneseš prigovor izbornoj komisiji u zakonskom roku.", v: "ok" },
+    { x: "Ne radiš ništa, svuda je isto.", v: "bad", fx: [-4, 0, -6] },
+    { x: "Odeš nazad da se svađaš sa članom odbora.", v: "bad", fx: [0, 0, -6] } ],
+  why: "Svaki birač ima pravo da podnese prigovor izbornoj komisiji zbog povrede izbornog prava, u kratkom roku propisanom zakonom. Organizacije koje posmatraju izbore beleže prijave građana i proveravaju ih." },
+
+{ t: "19:58", loc: "Telefon", title: "Brat kasni",
+  text: "Brat te zove: u hodniku škole je u redu, dva minuta je do 20 časova, a član odbora viče da se zatvara.",
+  opts: [
+    { x: "Kažeš mu da ide kući, zakasnio je.", v: "bad", fx: [0, 0, -10], f: "Nije zakasnio. Ko je na biračkom mestu u 20 časova, glasa." },
+    { x: "Kažeš mu da ostane u redu, jer svi koji su na biračkom mestu u 20 časova imaju pravo da glasaju. Ako ga ne puste, neka traži da se upiše u zapisnik.", v: "ok" },
+    { x: "Kažeš mu da ode na drugo biračko mesto koje radi duže.", v: "bad", fx: [0, 0, -10], f: "Sva biračka mesta se zatvaraju u 20 časova, a glasa se samo na svom." },
+    { x: "Kažeš mu da se progura napred.", v: "part", fx: [0, 0, -2], f: "Nema potrebe. Svi u redu u 20 časova glasaju." } ],
+  why: "Biračko mesto se zatvara u 20 časova. Birači koji su se u tom trenutku zatekli na biračkom mestu mogu da glasaju." },
+
+{ t: "21:30", loc: "Kod kuće", title: "Poruka na Viberu",
+  text: "U grupi zgrade kruži poruka: „Na BM 34 ubačeno 300 listića, prosledi dalje!“",
+  opts: [
+    { x: "Prosleđuješ u sve grupe, ljudi moraju da znaju.", v: "bad", fx: [0, 0, -12], f: "Neproverena informacija se širi brže od ispravke." },
+    { x: "Ne prosleđuješ. Pratiš rezultate po biračkim mestima na sajtu Republičke izborne komisije i izveštaje organizacija koje posmatraju izbore.", v: "ok" },
+    { x: "Odmah napišeš da je laž.", v: "part", fx: [0, 0, -4], f: "Ni to nisi proverio." },
+    { x: "Ideš u školu da proveriš kutiju.", v: "bad", fx: [0, 0, -6], f: "Brojanje prate odbor i posmatrači, a materijal se predaje izbornoj komisiji." } ],
+  why: "Republička izborna komisija objavljuje rezultate po biračkim mestima, a organizacije posmatrača objavljuju svoje nalaze. Tamo proveravaj, a ne po porukama." },
+
+{ t: "D+1", loc: "Kod kuće", title: "Deda je „glasao“",
+  text: "Komšija koji je bio u biračkom odboru kaže ti da je u izvodu stajao potpis pored imena tvog dede, koji je umro pre dve godine.",
+  opts: [
+    { x: "Nasmeješ se, to se dešava.", v: "bad", fx: [-4, 0, -8] },
+    { x: "Podneseš prigovor izbornoj komisiji u zakonskom roku i prijavu tužilaštvu. Tražiš od opštinske uprave da dedu briše iz biračkog spiska.", v: "ok" },
+    { x: "Samo tražiš brisanje dede iz spiska.", v: "part", fx: [0, 0, -2], f: "Spisak će biti ispravljen, ali glasanje pod tuđim imenom ostaje neprijavljeno." },
+    { x: "Objaviš dedino ime i fotografiju na mrežama.", v: "bad", fx: [0, 0, -6] } ],
+  why: "Glasanje umesto drugog lica je krivično delo, a „mrtve duše“ u spisku su poznat problem. Brisanje preminulih se traži od opštinske uprave, a nepravilnosti se prijavljuju izbornoj komisiji i tužilaštvu." }
+];
+
+let st;
+const fresh = () => ({ i: -1, m: [60, 60, 60], log: [], order: S.map(s => shuffle(s.opts.map((_, k) => k))), pick: null });
+
+function shuffle(a) { for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; } return a; }
+const clamp = v => Math.max(0, Math.min(100, v));
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const $ = id => document.getElementById(id);
+
+function meters() {
+  st.m.forEach((v, k) => {
+    $("m" + k).style.width = v + "%";
+    $("m" + k).classList.toggle("low", v < 30);
+    $("m" + k + "v").textContent = v;
+  });
+}
+
+function render() {
+  meters();
+  const sh = $("sheet");
+  if (st.i < 0) {
+    $("clock").textContent = "06:00";
+    $("place").textContent = "Kod kuće";
+    sh.innerHTML = `
+      <div class="step"><span>Biračko pravo</span></div>
+      <h1>Tvoj glas</h1>
+      <p class="lead">Birač si u opštini Jasenovo Polje i glasaš na biračkom mestu 34. Od provere biračkog spiska tri nedelje pre izbora do dana posle njih, čeka te ${S.length} situacija.</p>
+      <ul class="duties">
+        <li><b>Slobodan izbor</b> pada kad popustiš pod pritiskom, poklonom ili „savetom“.</li>
+        <li><b>Tajnost glasa</b> pada kad neko drugi vidi ili sazna kako si glasao.</li>
+        <li><b>Informisanost</b> raste kad znaš svoja prava i proveravaš činjenice.</li>
+      </ul>
+      <p>Posle svake odluke dobijaš objašnjenje. Na kraju vidiš kako si prošao kroz izbore.</p>
+      <div class="actions"><button class="btn" id="go">Počni</button></div>`;
+    $("go").onclick = () => { st.i = 0; render(); focusSheet(); };
+    return;
+  }
+  if (st.i >= S.length) return renderEnd();
+
+  const s = S[st.i], ord = st.order[st.i], answered = st.pick !== null;
+  $("clock").textContent = s.t;
+  $("place").textContent = s.loc;
+  const items = ord.map((k, n) => {
+    const o = s.opts[k], chosen = st.pick === k, right = answered && o.v === "ok";
+    const circle = chosen ? `<svg viewBox="0 0 56 46" aria-hidden="true"><ellipse cx="28" cy="23" rx="24" ry="19" transform="rotate(-8 28 23)"/></svg>` : "";
+    const tag = answered && (chosen || right) ? `<span class="tag ${o.v}">${chosen ? "Tvoj izbor · " : ""}${VLABEL[o.v]}</span>` : "";
+    return `<li><button class="opt${chosen ? " chosen" : ""}${right ? " right" : ""}" data-k="${k}" ${answered ? "disabled" : ""}>
+      <span class="num">${n + 1}.${circle}</span><span class="opt-text">${esc(o.x)}${tag}</span></button></li>`;
+  }).join("");
+
+  let verdict = "";
+  if (answered) {
+    const o = s.opts[st.pick];
+    verdict = `<div class="verdict">
+      <div class="stamp ${o.v}">${VLABEL[o.v]}</div>
+      <div class="note">
+        ${o.f ? `<p>${esc(o.f)}</p>` : ""}
+        <div class="label">Pravilo</div>
+        <p>${esc(s.why)}</p>
+      </div>
+      <div class="actions"><button class="btn" id="next">${st.i === S.length - 1 ? "Završi" : "Sledeća situacija"}</button></div>
+    </div>`;
+  }
+
+  sh.innerHTML = `
+    <div class="step"><span>Situacija ${st.i + 1} / ${S.length}</span><span>${s.t} h</span></div>
+    <h2>${esc(s.title)}</h2>
+    <p class="lead">${esc(s.text)}</p>
+    <ol class="ballot${answered ? " answered" : ""}">${items}</ol>
+    ${verdict}`;
+
+  sh.querySelectorAll(".opt").forEach(b => b.onclick = () => choose(+b.dataset.k));
+  if (answered) $("next").onclick = () => { st.i++; st.pick = null; render(); focusSheet(); };
+}
+
+function choose(k) {
+  if (st.pick !== null) return;
+  const s = S[st.i], o = s.opts[k], fx = o.fx || DEF[o.v];
+  st.pick = k;
+  st.m = st.m.map((v, n) => clamp(v + fx[n]));
+  st.log.push({ t: s.t, title: s.title, v: o.v });
+  render();
+  const nx = $("next"); if (nx) nx.focus({ preventScroll: true });
+}
+
+function renderEnd() {
+  $("clock").textContent = "D+1";
+  $("place").textContent = "Kod kuće";
+  const ok = st.log.filter(l => l.v === "ok").length;
+  const part = st.log.filter(l => l.v === "part").length;
+  const pts = ok + part * 0.5;
+  const rank = pts >= 18 ? ["Birač koga je teško prevariti", "Znaš svoja prava, čuvaš tajnost glasa i ne nasedaš na pritiske ni na neproverene vesti."]
+    : pts >= 14 ? ["Pažljiv birač", "Uglavnom si postupao ispravno. Pogledaj situacije gde si pogrešio pre sledećih izbora."]
+    : pts >= 9 ? ["Birač kome treba podsetnik", "Neki tvoji potezi mogli bi da ugroze tvoj glas ili tuđi. Proveri pravila pre sledećih izbora."]
+    : ["Lak plen za kupce glasova", "Na ovakvog birača računaju oni koji kupuju i kontrolišu glasove. Prođi igru ponovo i pročitaj objašnjenja."];
+  const rows = st.log.map(l => `<tr><td>${l.t}</td><td>${esc(l.title)}</td><td><span class="tag ${l.v}" style="margin:0">${VLABEL[l.v]}</span></td></tr>`).join("");
+  $("sheet").innerHTML = `
+    <div class="step"><span>Tvoji izbori</span><span>BM 34</span></div>
+    <h2>${rank[0]}</h2>
+    <div class="score">${ok}<small> / ${S.length} ispravnih odluka</small></div>
+    <p>${rank[1]}${part ? ` Delimično ispravnih odluka: ${part}.` : ""}</p>
+    <div class="log-wrap"><table class="log">
+      <thead><tr><th>Vreme</th><th>Situacija</th><th>Odluka</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>
+    <div class="actions"><button class="btn" id="again">Novi izborni dan</button></div>`;
+  $("again").onclick = () => { st = fresh(); render(); focusSheet(); };
+}
+
+function focusSheet() { $("sheet").scrollIntoView({ behavior: "smooth", block: "start" }); }
+
+function start(data) {
+  st = data && data.st && data.st.order ? data.st : fresh();
+  render();
+}
+window.claude?.hot?.snapshot?.(() => ({ st }));
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
+</body>
+</html>
