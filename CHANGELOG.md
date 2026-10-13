@@ -5,9 +5,11 @@ Sve značajne izmene igre Glasač beleže se u ovom fajlu. Brojevi verzija prate
 ## [Neobjavljeno]
 
 ### Dodato
+- Link „← Sve igre“ iznad zaglavlja, ka krovnoj aplikaciji Izborni dan (https://izborni-dan.netlify.app/).
 - Slika za deljenje na društvenim mrežama (`og-image.png`, 1200 × 630) i Open Graph i Twitter meta tagovi.
 
 ### Promenjeno
+- Slika za deljenje se u `og:image` i `twitter:image` navodi punom adresom (https://glasac.netlify.app/og-image.png), a dodat je i `og:url`.
 - Naziv igre: Glasač umesto Birač (naslov stranice, zaglavlje i dokumentacija).
 - Ikonica u tabu pregledača: štikliran glasački listić umesto listića sa zaokruženim brojem.
 - Meta opis stranice: „Od provere biračkog spiska do prigovora posle izbora. Kroz 20 situacija odluči kako da sačuvaš svoj glas od pritiska, ucene i prevare.“
