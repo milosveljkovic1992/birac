@@ -1,11 +1,16 @@
 # Izmene
 
-Sve značajne izmene igre Birač beleže se u ovom fajlu. Brojevi verzija prate pravila opisana u odeljku „Verzionisanje“ u README.md.
+Sve značajne izmene igre Glasač beleže se u ovom fajlu. Brojevi verzija prate pravila opisana u odeljku „Verzionisanje“ u README.md.
 
 ## [Neobjavljeno]
 
+### Dodato
+- Slika za deljenje na društvenim mrežama (`og-image.png`, 1200 × 630) i Open Graph i Twitter meta tagovi.
+
 ### Promenjeno
+- Naziv igre: Glasač umesto Birač (naslov stranice, zaglavlje i dokumentacija).
 - Ikonica u tabu pregledača: štikliran glasački listić umesto listića sa zaokruženim brojem.
+- Meta opis stranice: „Od provere biračkog spiska do prigovora posle izbora. Kroz 20 situacija odluči kako da sačuvaš svoj glas od pritiska, ucene i prevare.“
 
 ## [1.0.0] - 2026-10-13
 

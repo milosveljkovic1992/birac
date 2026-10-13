@@ -1,4 +1,4 @@
-# Birač
+# Glasač
 
 Tekstualna igra u kojoj si birač na izborima u Srbiji. Od provere biračkog spiska dvadeset dana pre izbora do dana posle izbora, rešavaš 20 situacija i biraš kako da zaštitiš svoj glas i svoja prava.
 
@@ -20,6 +20,7 @@ Situacije obuhvataju, između ostalog: proveru upisa u birački spisak, pritisak
 
 ```
 index.html     cela aplikacija (HTML, CSS i JavaScript u jednom fajlu)
+og-image.png   slika za deljenje na društvenim mrežama (1200 × 630)
 netlify.toml   podešavanja za Netlify (objava i bezbednosna zaglavlja)
 CHANGELOG.md   spisak izmena po verzijama
 README.md      ovaj fajl
