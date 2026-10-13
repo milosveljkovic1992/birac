@@ -257,9 +257,9 @@ const S = [
   why: "Obeležavanje prsta sprečava da ista osoba glasa više puta. Birač koji odbije da mu se prst obeleži ne može da glasa." },
 
 { t: "08:08", loc: "BM 34 · OŠ „Sveti Sava“", title: "Savet uz listić",
-  text: "Član odbora ti pruža listić i tiho dodaje: „Broj tri, je l' tako? Svi ovde tako glasaju.“",
+  text: "Član odbora ti pruža listić i tiho dodaje: „Broj jedan, je l' tako? Svi ovde tako glasaju.“",
   opts: [
-    { x: "Zaokružiš broj tri, nema veze.", v: "bad", fx: [-16, 0, 0] },
+    { x: "Zaokružiš broj jedan, nema veze.", v: "bad", fx: [-16, 0, 0] },
     { x: "Ne obaziraš se i glasaš po svom izboru. Posle kažeš predsedniku odbora ili posmatraču šta se desilo.", v: "ok" },
     { x: "Ne kažeš ništa, glasaš svoje i odeš.", v: "part", fx: [4, 0, -4], f: "Ti si glasao slobodno, ali će drugi birači čuti isti „savet“." },
     { x: "Vratiš listić i tražiš drugog člana odbora.", v: "part", fx: [0, 0, -2], f: "Nije potrebno. Listić je isti, a važno je da se ponašanje prijavi." } ],
@@ -279,7 +279,7 @@ const S = [
   opts: [
     { x: "Zaokružiš redni broj ispred liste za koju glasaš.", v: "ok" },
     { x: "Zaokružiš dve liste koje ti se podjednako sviđaju.", v: "bad", fx: [0, 0, -10], f: "Listić sa više zaokruženih lista je nevažeći." },
-    { x: "Prekrižiš sve liste osim one za koju glasaš.", v: "part", fx: [0, 0, -4], f: "Rizično je. Odbor može da proceni da volja nije nesumnjiva, pa da listić proglasi nevažećim." },
+    { x: "Precrtaš sve liste osim one za koju glasaš.", v: "part", fx: [0, 0, -4], f: "Rizično je. Odbor može da proceni da volja nije nesumnjiva, pa da listić proglasi nevažećim." },
     { x: "Zaokružiš, pa se predomisliš i tražiš novi listić.", v: "bad", fx: [0, 0, -6], f: "Biraču se ne izdaje novi listić. Odluči pre nego što zaokružiš." } ],
   why: "Važeći je listić iz kog se nesumnjivo vidi za koju listu je birač glasao. Najsigurnije je zaokružiti redni broj. Prazan listić i listić sa više zaokruženih lista su nevažeći, a novi listić se ne izdaje." },
 
